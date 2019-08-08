@@ -418,7 +418,11 @@ class TableView(RowTableShared):
         # Copy of params so we can mutate them later:
         from_sql_params = dict(**params)
 
-        count_sql = "select count(*) {}".format(from_sql)
+        count_sql = {
+            "sql": "select count(*) {}".format(from_sql),
+            "type": ( "query" if where_clauses else "table" ),
+            "table": ( None if where_clauses else escape_sqlite(table) )
+        }
 
         _next = _next or special_args.get("_next")
         offset = ""
@@ -549,12 +553,17 @@ class TableView(RowTableShared):
 
         # Number of filtered rows in whole set:
         filtered_table_rows_count = None
-        if count_sql:
+        if count_sql['sql']:
             try:
-                count_rows = list(
-                    await self.ds.execute(database, count_sql, from_sql_params)
-                )
-                filtered_table_rows_count = count_rows[0][0]
+                if count_sql['type'] == 'table' and db.cached_table_counts is not None:
+                    print( "Getting row count from cache: %s" % count_sql['sql'] )
+                    filtered_table_rows_count = db.cached_table_counts[ count_sql['table']] ;
+                else:
+                    print( "Counting rows: %s" % count_sql['sql'] )
+                    count_rows = list(
+                        await self.ds.execute(database, count_sql['sql'], from_sql_params )
+                    )
+                    filtered_table_rows_count = count_rows[0][0]
             except QueryInterrupted:
                 pass
 

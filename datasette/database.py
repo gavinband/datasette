@@ -61,6 +61,7 @@ class Database:
         counts = {}
         for table in await self.table_names():
             try:
+                print( "Inspecting %s..." % table )
                 table_count = (
                     await self.ds.execute(
                         self.name,

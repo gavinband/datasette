@@ -650,7 +650,7 @@ class Datasette:
             # First time server starts up, calculate table counts for immutable databases
             for dbname, database in self.databases.items():
                 if not database.is_mutable:
-                    await database.table_counts(limit=60 * 60 * 1000)
+                    await database.table_counts(limit=1000)
 
         asgi = AsgiLifespan(
             AsgiTracer(DatasetteRouter(self, routes)), on_startup=setup_db
